@@ -1,129 +1,121 @@
 <p align="center">
-  <img src="docs/images/banner.png" alt="OpenAvatar — the agent on a cloud, with a laptop" width="100%">
+  <img src="docs/banner.png" alt="OpenAvatar" width="100%">
 </p>
 
-<h1 align="center">OpenAvatar</h1>
+<h1 align="center">Describe it. Pick your sticker. It talks back.</h1>
 
 <p align="center">
-  <strong>Describe an avatar. Get four options. Pick one. It talks back.</strong><br>
-  A local-first talking avatar — ears that hear you, a brain that answers, and a mouth that speaks while the face moves. No cloud calls anywhere.
+  <strong>OpenAvatar</strong> is a talking avatar you actually converse with. Describe the character you want — or drop in a picture — get <strong>four sticker options</strong>, pick one, and it becomes your avatar: it listens, thinks, and answers out loud. Voice in, voice out, <strong>fully local</strong>. No cloud calls, no account, no keys leaving your machine.
 </p>
 
 <p align="center">
   <img src="https://img.shields.io/badge/license-MIT-green" alt="License: MIT">
+  <img src="https://img.shields.io/badge/local--first-yes-blue" alt="Local-first">
   <img src="https://img.shields.io/badge/python-3.11%2B-blue" alt="Python 3.11+">
-  <img src="https://img.shields.io/badge/local--first-no%20cloud%20calls-teal" alt="Local-first: no cloud calls">
-  <img src="https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux-lightgrey" alt="Windows, macOS, Linux">
-  <img src="https://img.shields.io/badge/status-working%20bench-orange" alt="Status: working bench">
+  <img src="https://img.shields.io/badge/ears-faster--whisper-orange" alt="Ears: faster-whisper">
+  <img src="https://img.shields.io/badge/brain-ollama-black" alt="Brain: Ollama">
+  <img src="https://img.shields.io/badge/mouth-piper-purple" alt="Mouth: Piper">
 </p>
+
+---
+
+<!-- ============================================================
+     HERO DEMO SLOT — when the rebuilt phone-call demo lands at
+     docs/demo.gif, replace the shot-main.png image directly
+     below with the demo. One line changes; nothing else moves.
+     ============================================================ -->
 
 <p align="center">
-  <img src="docs/images/icon.png" alt="OpenAvatar icon" width="120">
+  <img src="docs/shot-main.png" alt="OpenAvatar — the avatar, live in its call window" width="520">
 </p>
+<p align="center"><em>The call window: your sticker, alive — idle sway, listening tilt, thinking pulse, and a mouth that moves with its own voice.</em></p>
 
-## Demo
+---
 
-<p align="center">
-  <img src="docs/images/demo.gif" alt="OpenAvatar demo — the avatar working at his laptop, then looking up to talk, inside a phone call frame" width="420">
-</p>
+## 🎟️ The sticker pack
 
-The avatar's two modes, in one call window: heads-down **working at the laptop**, then looking up and **talking to you** — seated on his cloud, laptop in front of him, gesturing as he speaks. The clip plays full-bleed inside a phone frame with a FaceTime-style call bar (mute · volume · end call).
+Every avatar is a **sticker**: a glossy 3D-style character with a locked look — same face, same outfit language, new scene. The built-in pack:
 
-*Honest label: this is an animated character demo rendered for this README — not a screen recording of the app. The finish is graded flat-matte, matching the character's house look (flat matte clay). For the real app running, see the Quickstart below.*
+| | | | | |
+|---|---|---|---|---|
+| <img src="avatar.jpg" width="150"> | <img src="avatars/avatar-cloud.jpg" width="150"> | <img src="avatars/avatar-space.jpg" width="150"> | <img src="avatars/avatar-workshop.jpg" width="150"> | <img src="avatars/avatar-garden.jpg" width="150"> |
+| **Studio** (default) | **Cloud** | **Space** | **Workshop** | **Garden** |
 
-Open the app and the avatar is already alive on stage — idly floating, thinking, listening. Talk to it three ways:
+Don't like the pack? **Make your own** — the Studio renders four fresh options from your description or your picture, and the one you pick joins the window immediately and stays picked.
 
-- **🎙 Talk** — press, speak, press again. Your browser records the mic; OpenAvatar transcribes it, answers, and speaks the reply while the avatar's face moves with the actual audio.
-- **Type to talk** — the text box always works, no microphone needed.
-- **Synthetic ear** — feed any spoken audio file (WAV/MP3/WebM) through the exact same ears pipeline. This is how the bench is tested without a microphone.
+## ✨ Pick a sticker → it comes alive
 
-## The Avatar Studio — "change my avatar"
+1. **Describe it, or give it a picture.** Type what you want ("a robot barista in a red apron") or upload an image to base it on.
+2. **Pick from four.** The Studio renders four sticker options in the house style. Click the one that's *you*.
+3. **It comes alive.** Your pick moves into the call window and starts working: ask it something by voice or text, it turns to you and answers out loud — head bobbing, mouth moving with the real audio.
 
-The flow is modeled on how this project's own avatar was made: **ask → get options → pick one.**
+## 🔌 A framework, not just a demo
 
-<p align="center">
-  <img src="docs/images/studio-options.jpg" alt="Four studio avatar options — cloud desk, space, workshop, garden" width="720">
-</p>
+OpenAvatar is built to **plug into other apps and agent stacks**. The product surface is one embeddable unit — the **Call Window** — driven by a small HTTP API that exists and is proven today:
 
-1. Click **🎭 Change my avatar**.
-2. **Describe** your avatar ("a sharp agent in space, gold and teal") and hit **Generate 4 options** — or **upload a picture**.
-3. Four options appear. **Click one** → it becomes the talking face immediately, and the pick persists across restarts.
+| Endpoint | What it does |
+|---|---|
+| `POST /talk` | Text (or a synthetic-ear WAV) in → transcript, reply text, and spoken reply audio out |
+| `POST /avatar/generate` | Description in → four sticker options out |
+| `POST /avatar/upload` | Your picture in → becomes a selectable option |
+| `POST /avatar/pick` | Locks your choice — persisted, everywhere, immediately |
+| `GET /health` · `GET /state` | Honest status: which ears, brain, and mouth are actually live |
 
-**Generator honesty:** a local bench server has no route to a real image model, so the built-in generator is a stand-in composer (`studio.py`): it reads the description's keywords — scenes (space, city, sunset, beach, forest, mountain, neon, studio), colors, light/dark — and composes four genuinely different options from the house avatar art. The production studio plugs an image model into the **same slot**: same request (`POST /avatar/generate {"description": ...}`), same four-option response shape. The **upload path is fully real**: your picture becomes an option as-is.
+The full spec — Call Window states, the agent event interface, the sticker standard, and the honest exists-vs-spec ledger — lives in **[FRAMEWORK.md](FRAMEWORK.md)**. The realtime streaming channel and the embeddable component package are **spec, not shipped**, and are labelled that way everywhere they appear.
 
-## How it works
+> **Premium voices** and full talk-back ship as a gated feature of **Robot Orchestra V2** — the open layer in this repo runs the standard local voice (Piper). No pricing or sales copy lives in this repo.
 
-| Piece | What it is | Where it comes from |
+## 🧠 How it works
+
+| Part | Engine | Notes |
 |---|---|---|
-| **Face** | `avatar.jpg` + `index.html` — idle sway, thinking pulse, amplitude-driven talk animation (mouth shadow + head bob + halo glow, driven by the reply audio via WebAudio), plus a 2.5D depth presentation: pointer-parallax tilt, a soft glow behind the character, and a grounded shadow that shifts against the tilt | 3D-style generated portraits of the house character (sunglasses, black suit, gold tie, laptop, cloud). The original flat illustration is kept as `avatar-legacy.jpg` |
-| **Ears** | faster-whisper (tiny, CPU, int8), `POST /hear` | One recognizer configuration, shared with the Two Ears test rig — the same path its mic ear and synthetic ear feed |
-| **Brain** | Ollama chat, `qwen2.5:0.5b`, persona prompt, short spoken-style replies (they're read aloud), small rolling history | Local Ollama at `127.0.0.1:11434`. Swap with `BENCH_OLLAMA_MODEL` (e.g. `llama3.1:8b` for a deeper persona at more latency) |
-| **Mouth** | Piper TTS → WAV, `POST /talk` | Piper binary + voice model, text on stdin, `--output_file`. Default voice **en_US-lessac-medium** |
+| **Ears** | faster-whisper (tiny, int8) | Imported from the [Two Ears](https://github.com/EdgeAgent/two-ears-one-mouth) rig — one shared recognizer config, reported honestly by `/health`. Browser mic capture on the page, or feed a WAV to the synthetic ear. |
+| **Brain** | Ollama (`qwen2.5:0.5b` by default) | Local LLM with a spoken-style persona and rolling conversation history — typed and spoken lines share one conversation. |
+| **Mouth** | Piper (`en_US-lessac-medium`) | The same invocation Robot Orchestra V2's voice server uses — binary + voice model, text on stdin, WAV out. Fast, light, and fully local. |
+| **Face** | Sticker portrait + WebAudio | The reply's real audio drives the mouth, head bob, and halo — amplitude-synced, not a looping GIF. Pointer-parallax tilt and a grounded shadow give the still its 3D presence. |
 
-Server: `server.py` — Python standard library only, loopback-only bind, **port 8899**.
+## 🎭 The Studio
 
-Config via environment: `BENCH_PORT`, `BENCH_WHISPER_MODEL`, `BENCH_OLLAMA_URL`, `BENCH_OLLAMA_MODEL`, `BENCH_PIPER_BIN`, `BENCH_PIPER_MODEL`, `BENCH_TTS_VOICE`, `BENCH_RIG_DIR`.
+<p align="center">
+  <img src="docs/shot-studio.png" alt="OpenAvatar Studio — describe it, get four options" width="520">
+</p>
 
-## Quickstart
+Describe it or upload a picture → four options → click → the face in the window changes *now* and persists across restarts (server state + browser storage). The bench's generator is a **labelled stand-in composer** (keyword scenes over bundled art, deterministic per description) that fills the exact slot a production image model plugs into — same request in, same four options out. The upload path is fully real.
 
-Prerequisites: Python 3.11+ and [Ollama](https://ollama.com), with the brain model pulled:
+## 🚀 Quick start
 
-```powershell
-ollama pull qwen2.5:0.5b
-```
-
-**Windows:**
-
-```powershell
-py -m venv .venv
-.venv\Scripts\pip install -r requirements.txt
-.venv\Scripts\python -m piper.download_voices en_US-lessac-medium
-```
-
-Copy the downloaded `en_US-lessac-medium.onnx` + `.onnx.json` into `voices\`, then:
-
-```powershell
-run.bat
-```
-
-**macOS / Linux:**
+**Prerequisites:** Python 3.11+, [Ollama](https://ollama.com) running locally with a small model pulled (`ollama pull qwen2.5:0.5b`), and the [Two Ears](https://github.com/EdgeAgent/two-ears-one-mouth) rig cloned next door (the ears import from it; a same-config local fallback exists and `/health` tells you which one is live).
 
 ```bash
-python3 -m venv .venv && .venv/bin/pip install -r requirements.txt
+# Windows
+run.bat
+
+# macOS / Linux
 ./run.sh
 ```
 
-Then open **http://127.0.0.1:8899** in Chrome or Edge. `127.0.0.1` counts as a secure context, so the microphone works there. Leave Ollama running.
+Then open **http://127.0.0.1:8899** — loopback only, nothing exposed. Type to talk, use the mic button for your browser microphone, or POST a WAV to `/talk` to drive the synthetic ear.
 
-## Proof
+## ⚠️ Honest limits
 
-`TEST-LOG.md` — the synthetic-ear loop run end-to-end: Piper-spoken question → exact transcript → brain reply → spoken reply WAV, with timings and honest caveats. Re-run it any time with the server up:
+- **The Studio generator is a stand-in**, labelled in the UI, the README, and `/health`. Production swaps in a real image model behind the same interface.
+- **Real-microphone proof happens on your machine.** This bench was built in a sandbox with no audio hardware — mic capture is browser-side by design and the code reports "no microphone" cleanly instead of faking it. First physical-mic proof is on a real Windows machine.
+- **3D-style stills, not a real-time 3D model.** The presence comes from layered 2.5D presentation over generated portraits.
+- **Small local brain.** The default 0.5B model keeps replies short and spoken-style; it is a conversation partner for the bench, not a reasoning engine. Point Ollama at a bigger model if you want more.
+- **The demo recording** for this README is being rebuilt (a live phone-call-style capture); the screenshots above are the current visual proof — real captures of the running bench, not mockups.
 
-```powershell
-.venv\Scripts\python test\run_e2e.py
-```
+## 🗺️ Roadmap
 
-## Honest limits
+- [ ] Live phone-call demo at the top of this README
+- [ ] Kevin's Windows test: physical mic, full conversation, Studio pick end-to-end
+- [ ] Production image model in the Studio generator slot
+- [ ] Realtime streaming channel + embeddable Call Window package (per FRAMEWORK.md spec)
+- [ ] Lift into the **Robot Orchestra V2** chat window — only after the standalone test passes
 
-- **Real microphone proof happens on your machine.** The build sandbox has no audio hardware, and the server never captures a mic by design — the browser does. The page detects a blocked or missing mic and reports it cleanly, falling back to typing or the synthetic ear.
-- **The look is 3D-style art with 2.5D presentation — not a real-time 3D model**, and nothing here claims otherwise.
-- The talking animation is tasteful, not a redrawn character: mouth shadow + head motion driven by the real reply audio. True lip-sync would need per-phoneme data Piper doesn't emit here.
-- The 0.5B brain is fast and format-obedient but generic. Persona depth scales with the model you point `BENCH_OLLAMA_MODEL` at.
-- One shared conversation history lives in the server process; restart clears it. No accounts, no persistence beyond the avatar pick — it's a bench.
+## 📄 License
 
-## What's in this repo
+MIT — see [LICENSE](LICENSE). © Kevin Doherty.
 
-Code, docs, scripts — and the avatar art (`avatar.jpg`, `avatars/*.jpg`, `docs/images/`). Two things stay out by design:
+---
 
-- `voices/*.onnx` — the Piper voice model; restore it with the `piper.download_voices` step above.
-- `test/*.wav` — proof recordings; regenerate them with `test/run_e2e.py`.
-
-Runtime output (`avatars/generated/`, `avatars/uploads/`, `state.json`) is created on first use and git-ignored.
-
-## Where this goes next
-
-OpenAvatar is the test-first bench for a companion-face module: the stage and its state classes (idle / listening / thinking / talking) map 1:1 onto a host app's voice states, the ears and mouth are already the shared local voice stack, and the Studio's four-option flow is the in-app "change my avatar" experience. One rule carries over unchanged: anything the avatar is asked to *do* — send, pay, delete, ship — still goes through the host app's approval gate. The bench only talks.
-
-## License
-
-MIT — see `LICENSE`.
+<p align="center"><em>OpenAvatar is the open framework and bench. Its premium voices and full talk-back ship inside Robot Orchestra V2.</em></p>

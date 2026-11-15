@@ -7,8 +7,9 @@ Talking Avatar Bench — one small local server. Loopback only.
   GET  /health   -> engine report: ears / brain / mouth readiness
   POST /hear     -> raw audio bytes in (webm/wav/mp3/ogg/m4a), transcript out.
                     EARS: the Two Ears rig's hear path, imported — see below.
-  POST /talk     -> JSON {"text": "..."} in; Ollama reply + Piper WAV out
-                    as JSON {"reply", "audioBase64", timings}.
+  POST /talk     -> JSON {"text": "..."} in; Ollama reply + spoken WAV
+                    out as JSON {"reply", "audioBase64", timings,
+                    "tts_engine", "tts_voice"}.
 
 EARS reuse: this server imports load_model/transcribe_file from the Two
 Ears rig (~/workspace/two-ears-one-mouth/rig/hear.py) — the rig's ONE
@@ -16,10 +17,10 @@ recognizer configuration (faster-whisper, cpu, int8). Nothing is forked;
 if the rig is not importable, it falls back to the identical local config
 and /health says which path is active.
 
-MOUTH: Piper, invoked exactly the way Robot Orchestra's V2 voice server
-(apps/desktop/voice-server/voice_server.py) invokes it — binary + voice
-model, text on stdin, --output_file WAV. Voice: en_US-lessac-medium,
-the same default voice as the V2 server.
+MOUTH: Piper, invoked exactly the way Robot Orchestra's V2 voice
+server (apps/desktop/voice-server/voice_server.py) invokes it — binary
++ voice model, text on stdin, --output_file WAV. Voice:
+en_US-lessac-medium, the same default voice as the V2 server.
 
 BRAIN: local Ollama chat, qwen2.5:0.5b, short spoken-style replies.
 
@@ -135,11 +136,11 @@ PIPER_BIN = find_piper_bin()
 PIPER_MODEL = find_piper_model()
 
 
-def tts_ready():
+def piper_ready():
     return bool(PIPER_BIN and PIPER_MODEL)
 
 
-def synthesize_wav(text):
+def synthesize_wav_piper(text):
     """Piper for one utterance; returns WAV bytes. Same call shape as
     Robot Orchestra's V2 voice_server.py synthesize_wav()."""
     with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as tmp:
@@ -164,6 +165,16 @@ def synthesize_wav(text):
             os.unlink(out_path)
         except OSError:
             pass
+
+
+def tts_ready():
+    return piper_ready()
+
+
+def synthesize_wav(text):
+    """Speak one utterance with Piper.
+    Returns (wav_bytes, engine_used, voice_used)."""
+    return synthesize_wav_piper(text), "piper", TTS_VOICE
 
 
 # ---------------------------------------------------------------- brain
@@ -323,7 +334,7 @@ class Handler(BaseHTTPRequestHandler):
                     "mouth": {
                         "engine": "piper",
                         "voice": TTS_VOICE,
-                        "ready": tts_ready(),
+                        "ready": piper_ready(),
                         "bin": PIPER_BIN,
                         "model": PIPER_MODEL,
                     },
@@ -437,7 +448,8 @@ class Handler(BaseHTTPRequestHandler):
     def _talk(self):
         raw = self._body()
         try:
-            text = str(json.loads(raw or b"{}").get("text") or "").strip()
+            payload = json.loads(raw or b"{}")
+            text = str(payload.get("text") or "").strip()
         except Exception:
             return self._json(400, {"error": "invalid JSON body"})
         if not text:
@@ -451,18 +463,17 @@ class Handler(BaseHTTPRequestHandler):
                 502, {"error": "brain failed: %s" % exc, "code": "BRAIN_FAILED"}
             )
         if not tts_ready():
+            detail = "Piper TTS unavailable (bin: %s, model: %s)" % (
+                PIPER_BIN or "not found",
+                PIPER_MODEL or "not found",
+            )
             return self._json(
                 503,
-                {
-                    "error": "Piper TTS unavailable (bin: %s, model: %s)"
-                    % (PIPER_BIN or "not found", PIPER_MODEL or "not found"),
-                    "code": "TTS_UNAVAILABLE",
-                    "reply": reply,
-                },
+                {"error": detail, "code": "TTS_UNAVAILABLE", "reply": reply},
             )
         try:
             t0 = time.time()
-            wav = synthesize_wav(reply[:600])
+            wav, engine_used, voice_used = synthesize_wav(reply[:600])
             tts_ms = int((time.time() - t0) * 1000)
         except Exception as exc:
             return self._json(
@@ -476,6 +487,8 @@ class Handler(BaseHTTPRequestHandler):
                 "audioBase64": base64.b64encode(wav).decode("ascii"),
                 "llm_ms": llm_ms,
                 "tts_ms": tts_ms,
+                "tts_engine": engine_used,
+                "tts_voice": voice_used,
             },
         )
 
@@ -493,7 +506,7 @@ def main():
             OLLAMA_MODEL,
             ollama_up(),
             TTS_VOICE,
-            tts_ready(),
+            piper_ready(),
         ),
         flush=True,
     )
