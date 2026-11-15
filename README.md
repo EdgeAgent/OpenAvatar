@@ -24,8 +24,12 @@
 ## Demo
 
 <p align="center">
-  <img src="docs/images/demo.gif" alt="OpenAvatar stage motion — idle float" width="420">
+  <img src="docs/images/demo.gif" alt="OpenAvatar demo — the avatar working at his laptop, then looking up to talk, inside a phone call frame" width="420">
 </p>
+
+The avatar's two modes, in one call window: heads-down **working at the laptop**, then looking up and **talking to you** — seated on his cloud, laptop in front of him, gesturing as he speaks. The clip plays full-bleed inside a phone frame with a FaceTime-style call bar (mute · volume · end call).
+
+*Honest label: this is an animated character demo rendered for this README — not a screen recording of the app. The finish is graded flat-matte, matching the character's house look (flat matte clay). For the real app running, see the Quickstart below.*
 
 Open the app and the avatar is already alive on stage — idly floating, thinking, listening. Talk to it three ways:
 
