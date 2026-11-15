@@ -1,0 +1,11 @@
+.venv/
+.tmp/
+__pycache__/
+server.log
+state.json
+voices/*.onnx
+voices/*.onnx.json
+test/*.wav
+avatars/generated/
+avatars/uploads/
+media-generation-*.json
