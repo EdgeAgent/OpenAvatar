@@ -4,6 +4,9 @@ Talking Avatar Bench — one small local server. Loopback only.
 
   GET  /         -> the bench page (index.html)
   GET  /avatar.jpg
+  GET  /cast     -> the character cast: every portrait in characters/,
+                    merged with characters/cast.json metadata
+  GET  /characters/<file> -> a cast portrait (same serve path as avatars)
   GET  /health   -> engine report: ears / brain / mouth readiness
   POST /hear     -> raw audio bytes in (webm/wav/mp3/ogg/m4a), transcript out.
                     EARS: the Two Ears rig's hear path, imported — see below.
@@ -228,6 +231,8 @@ def ollama_up():
 # ---------------------------------------------------------------- studio
 STATE_PATH = os.path.join(BENCH_DIR, "state.json")
 AVATARS_DIR = os.path.join(BENCH_DIR, "avatars")
+CHARACTERS_DIR = os.path.join(BENCH_DIR, "characters")
+CAST_META_PATH = os.path.join(CHARACTERS_DIR, "cast.json")
 UPLOAD_TYPES = {
     "image/png": ".png",
     "image/jpeg": ".jpg",
@@ -263,6 +268,42 @@ def generate_options(description):
     import studio  # lazy: keeps the talk path free of the PIL import
 
     return studio.generate(description)
+
+
+def list_cast():
+    """The character cast: every image file in characters/, merged with
+    the optional cast.json metadata (name/label/blurb/mouth position).
+    Dropping a new portrait into characters/ is all it takes for it to
+    appear here and in the Studio's Cast row — metadata is optional."""
+    meta = {}
+    try:
+        with open(CAST_META_PATH) as fh:
+            loaded = json.load(fh)
+        if isinstance(loaded, dict):
+            meta = loaded
+    except Exception:
+        pass
+    cast = []
+    if os.path.isdir(CHARACTERS_DIR):
+        for name in sorted(os.listdir(CHARACTERS_DIR)):
+            if os.path.splitext(name)[1].lower() not in STATIC_TYPES:
+                continue
+            if not os.path.isfile(os.path.join(CHARACTERS_DIR, name)):
+                continue
+            info = meta.get(name) or {}
+            stem = os.path.splitext(name)[0]
+            cast.append(
+                {
+                    "id": stem,
+                    "name": info.get("name") or stem.replace("-", " ").title(),
+                    "url": "/characters/" + name,
+                    "label": info.get("label") or stem.replace("-", " ").title(),
+                    "blurb": info.get("blurb") or "",
+                    "mx": info.get("mx"),
+                    "my": info.get("my"),
+                }
+            )
+    return cast
 
 
 # ---------------------------------------------------------------- http
@@ -308,8 +349,12 @@ class Handler(BaseHTTPRequestHandler):
                 self._send(200, fh.read(), "image/jpeg")
         elif self.path == "/state":
             self._json(200, load_state())
+        elif self.path == "/cast":
+            self._json(200, {"cast": list_cast()})
         elif self.path.startswith("/avatars/"):
             self._serve_avatar_file(self.path[len("/avatars/"):])
+        elif self.path.startswith("/characters/"):
+            self._serve_character_file(self.path[len("/characters/"):])
         elif self.path == "/health":
             self._json(
                 200,
@@ -345,13 +390,19 @@ class Handler(BaseHTTPRequestHandler):
         else:
             self._json(404, {"error": "not found"})
 
-    def _serve_avatar_file(self, rel):
-        path = os.path.normpath(os.path.join(AVATARS_DIR, rel))
-        if not path.startswith(AVATARS_DIR) or not os.path.isfile(path):
+    def _serve_from(self, base_dir, rel):
+        path = os.path.normpath(os.path.join(base_dir, rel))
+        if not path.startswith(base_dir) or not os.path.isfile(path):
             return self._json(404, {"error": "not found"})
         ext = os.path.splitext(path)[1].lower()
         with open(path, "rb") as fh:
             self._send(200, fh.read(), STATIC_TYPES.get(ext, "application/octet-stream"))
+
+    def _serve_avatar_file(self, rel):
+        self._serve_from(AVATARS_DIR, rel)
+
+    def _serve_character_file(self, rel):
+        self._serve_from(CHARACTERS_DIR, rel)
 
     def do_POST(self):
         if self.path == "/hear":
@@ -414,7 +465,11 @@ class Handler(BaseHTTPRequestHandler):
             url = str(json.loads(raw or b"{}").get("url") or "")
         except Exception:
             return self._json(400, {"error": "invalid JSON body"})
-        if not (url == "/avatar.jpg" or url.startswith("/avatars/")):
+        if not (
+            url == "/avatar.jpg"
+            or url.startswith("/avatars/")
+            or url.startswith("/characters/")
+        ):
             return self._json(400, {"error": "unknown avatar url"})
         state = {"faceUrl": url, "pickedAt": int(time.time())}
         save_state(state)

@@ -129,16 +129,17 @@
   }
   .upload-label{font-size:14px; color:var(--dim)}
   .upload-label input{color:var(--dim)}
-  #avatarGrid, #houseGrid{display:grid; grid-template-columns:repeat(4, 1fr); gap:10px; margin:12px 0 6px}
+  #avatarGrid, #houseGrid, #castGrid{display:grid; grid-template-columns:repeat(4, 1fr); gap:10px; margin:12px 0 6px}
   #houseGrid{grid-template-columns:repeat(5, 1fr)}
-  #avatarGrid figure, #houseGrid figure{margin:0; cursor:pointer; text-align:center}
-  #avatarGrid img, #houseGrid img{
+  #castGrid{grid-template-columns:repeat(3, 1fr)}
+  #avatarGrid figure, #houseGrid figure, #castGrid figure{margin:0; cursor:pointer; text-align:center}
+  #avatarGrid img, #houseGrid img, #castGrid img{
     width:100%; aspect-ratio:1; object-fit:cover; border-radius:12px;
     border:3px solid transparent; display:block;
   }
-  #avatarGrid figure:hover img, #houseGrid figure:hover img{border-color:var(--teal)}
-  #avatarGrid figure.picked img, #houseGrid figure.picked img{border-color:var(--gold)}
-  #avatarGrid figcaption, #houseGrid figcaption{font-size:12px; color:var(--dim); margin-top:4px}
+  #avatarGrid figure:hover img, #houseGrid figure:hover img, #castGrid figure:hover img{border-color:var(--teal)}
+  #avatarGrid figure.picked img, #houseGrid figure.picked img, #castGrid figure.picked img{border-color:var(--gold)}
+  #avatarGrid figcaption, #houseGrid figcaption, #castGrid figcaption{font-size:12px; color:var(--dim); margin-top:4px}
   .studio-note{font-size:12.5px; color:var(--dim); line-height:1.45; margin:8px 0 6px}
 
   /* ---- log ---- */
@@ -196,6 +197,8 @@
   </div>
   <p class="studio-note">House portraits — the 3D set. Click one to wear it now:</p>
   <div id="houseGrid"></div>
+  <p class="studio-note">The cast — ready-made characters in the house style. Click one to put them on the call:</p>
+  <div id="castGrid"></div>
   <div id="avatarGrid"></div>
   <p class="studio-note">Bench honesty: the generator here is a <em>stand-in composer</em> —
   keyword scenes built over the house avatar art, not an image model. The production
@@ -519,6 +522,40 @@ HOUSE.forEach(o => {
   houseGrid.appendChild(fig);
 });
 markHousePicked();
+
+/* ---------- the cast: ready-made characters from /cast ---------- */
+const castGrid = document.getElementById('castGrid');
+function markCastPicked(){
+  document.querySelectorAll('#castGrid figure').forEach(f => {
+    f.classList.toggle('picked', f.dataset.url === faceImg.getAttribute('src'));
+  });
+}
+(async () => {
+  try{
+    const r = await fetch('/cast');
+    const h = await r.json();
+    (h.cast || []).forEach(o => {
+      const fig = document.createElement('figure');
+      fig.dataset.url = o.url;
+      const img = document.createElement('img');
+      img.src = o.url; img.alt = o.label;
+      const cap = document.createElement('figcaption');
+      cap.textContent = o.label;
+      fig.appendChild(img); fig.appendChild(cap);
+      fig.addEventListener('click', async () => {
+        if (o.mx != null && o.my != null){
+          mouthEl.style.left = o.mx + '%';
+          mouthEl.style.top = o.my + '%';
+        }
+        await pickAvatar(o.url, o.label);
+        markCastPicked();
+        markHousePicked();
+      });
+      castGrid.appendChild(fig);
+    });
+    markCastPicked();
+  }catch(e){}
+})();
 
 /* ---------- synthetic ear ---------- */
 document.getElementById('fileInput').addEventListener('change', e => {

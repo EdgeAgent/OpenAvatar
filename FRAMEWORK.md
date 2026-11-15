@@ -193,6 +193,50 @@ Target shape (spec):
 **Not implemented:** the WebSocket server, audio streaming, and the event
 bus do not exist in the bench today. Section 3's WebSocket sketch is a sketch.
 
+### 2.3 The character cast — ready-made faces (exists today)
+
+Beyond generating one-off options, the bench carries a **cast**: finished
+characters a user can put on the call in one click, from the Studio's Cast
+row. The cast is data, not code:
+
+- **`GET /cast`** — lists every image file in `characters/`, merged with the
+  optional `characters/cast.json` metadata (`name`, `label`, `blurb`, and
+  the mouth-overlay position `mx`/`my` measured off the portrait by eye).
+- **`GET /characters/<file>`** — serves a cast portrait through the same
+  path-guarded static route as `/avatars/`.
+- Picking a cast member uses the **same** `POST /avatar/pick` + `/state`
+  mechanism as every other face — `/characters/...` URLs are accepted
+  alongside `/avatar.jpg` and `/avatars/...`. Nothing about the talk path
+  changes; the cast member is simply the face on the call.
+
+**The cast today:** **Nova** (the strategist — dark curly hair, deep teal
+blazer, star-emblem laptop, mid-speech on her cloud), **Bolt** (the robot —
+matte clay dome and antenna, grey-cream panels, tablet in both hands,
+standing), and **Professor** (the mentor — grey beard, round glasses, brown
+cardigan, headphones on, typing on his book-emblem laptop). Pip remains the
+default face (`/avatar.jpg`).
+
+**Adding a character — the on-the-fly flow:** describe the character → Pip
+generates the portrait in the house style (below) and eye-QCs it → the file
+drops into `characters/` (plus an optional `cast.json` entry for its label,
+blurb, and mouth position) → it appears in `GET /cast` and the Studio's
+Cast row immediately. No restart, no code change.
+
+**Character style standard (corrected 2026-11-15, Kevin's ruling):**
+character work matches the actual Muse call avatar — the references in
+`docs/style-reference/` (`call-avatar-working.png`,
+`call-avatar-talking.png`). That means: a **soft matte clay render** (smooth
+rounded clay surfaces, gentle matte shading — *not* flat marker, no ink
+outlines, no marker grain, no gloss), a **flat solid background** (plain
+light by default, or a colour that fits the character or the describer's
+ask), and a **flexible pose and setting** — the cloud is optional (one
+reference has it, one doesn't); sitting or standing, working or talking.
+This supersedes the flat-marker direction for character portraits; the
+flat-marker Pip portrait at `avatar.jpg` predates the correction and is a
+separate, still-open restyle. Pip's locked identity cues stay as in the
+references: sunglasses, black suit, gold tie, gold-emblem laptop,
+headphones in the working pose.
+
 ---
 
 ## 3. The agent interface — how apps and agents plug in
@@ -362,6 +406,12 @@ One short section, per the product ruling (Kevin, 2026-11-15):
   `thinking` / `talking` states and amplitude-driven mouth animation.
 - The Studio flow end-to-end (describe → 4 options → pick → persisted face),
   with the generator honestly labelled a stand-in composer.
+- The character cast (§2.3): Nova, Bolt, and Professor in `characters/`,
+  listed by `GET /cast`, pickable through the same pick/state flow, rendered
+  in the corrected call-avatar clay style (references in
+  `docs/style-reference/`). Proven live 2026-11-15: per-member picks,
+  byte-identical serves, and a synthetic-ear round trip with a cast member
+  active.
 - Sticker pack v1 in `stickers/` — see its README for per-sticker QC and the
   cutout method used.
 
