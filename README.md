@@ -26,9 +26,9 @@
      ============================================================ -->
 
 <p align="center">
-  <img src="docs/shot-main.png" alt="OpenAvatar — the avatar, live in its call window" width="520">
+  <img src="docs/call-window.png" alt="OpenAvatar — the avatar, live in its call window" width="520">
 </p>
-<p align="center"><em>The call window: your sticker, alive — idle sway, listening tilt, thinking pulse, and a mouth that moves with its own voice.</em></p>
+<p align="center"><em>The call window — Pip on the cloud, phone in hand, call bar below. This is the window the bench opens with.</em></p>p>
 
 ---
 
